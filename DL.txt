@@ -1,0 +1,212 @@
+DL linear using DNN   asgn 01
+
+
+import numpy as np
+from sklearn.datasets import load_boston
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# Load the Boston dataset
+boston = load_boston()
+X = boston.data
+y = boston.target
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Normalize the features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# Define the model architecture
+model = Sequential()
+model.add(Dense(1, input_shape=(X_train.shape[1],)))
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train_scaled, y_train, epochs=100, batch_size=32, verbose=1)
+# Predict on the test set
+y_pred = model.predict(X_test_scaled)
+
+# Calculate mean absolute error
+mae = mean_absolute_error(y_test, y_pred)
+print("Mean Absolute Error:", mae)
+
+# Calculate mean squared error
+mse = mean_squared_error(y_test, y_pred)
+print("Mean Squared Error:", mse)
+
+# Calculate R^2 score
+r2 = r2_score(y_test, y_pred)
+print("R^2 Score:", r2)
+
+import matplotlib.pyplot as plt
+
+# Plot predicted versus actual values
+plt.scatter(y_test, y_pred)
+plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 'k--', lw=2)  # Plot the ideal line
+plt.xlabel('Actual Values')
+plt.ylabel('Predicted Values')
+plt.title('Predicted vs Actual Values')
+plt.show()
+
+
+
+
+
+
+
+DL fashion data set CNN asgn 02
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import random
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D,MaxPooling2D,Dense,Flatten,Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import TensorBoard
+%matplotlib inline
+#change the location of data as per requirement 
+fashion_train_df= pd.read_csv('/content/drive/MyDrive/archive/fashion-mnist_train.csv')
+fashion_test_df = pd.read_csv('/content/drive/MyDrive/archive/fashion-mnist_test.csv')
+
+training = np.array(fashion_train_df,dtype='float32')
+testing = np.array(fashion_test_df,dtype='float32')
+training.shape
+#run
+i = random.randint(0,60001) 
+plt.imshow(training[i,1:].reshape(28,28)) 
+label = training[i,1] 
+label
+#run
+W_grid = 7
+L_grid = 7
+fig,axes = plt.subplots(L_grid,W_grid,figsize =(17,17))
+axes = axes.ravel() 
+n_training = len(training) 
+for i in np.arange(0,W_grid*L_grid):
+        index = np.random.randint(0,n_training)
+        axes[i].imshow(training[index,1:].reshape((28,28)))
+        axes[i].set_title(training[index,0],fontsize = 8)
+        axes[i].axis('off')
+plt.subplots_adjust(hspace=0.4)  
+#run
+X_train = training[:,1:]/255
+y_train = training[:,0]
+X_test = testing[:,1:]/255
+y_test = testing[:,0]
+#run
+X_train, X_validate, y_train, y_validate = train_test_split(X_train, y_train,test_size = 0.2,random_state = 12345) 
+#run
+X_train = X_train.reshape(X_train.shape[0],*(28,28,1))
+X_test = X_test.reshape(X_test.shape[0],*(28,28,1))
+X_validate = X_validate.reshape(X_validate.shape[0],*(28,28,1))
+#run
+cnn_model = Sequential()
+cnn_model.add(Conv2D(32,3,3,input_shape = (28,28,1),activation = 'relu'))
+cnn_model.add(MaxPooling2D(pool_size= (2,2)))
+cnn_model.add(Flatten())
+cnn_model.add(Dense(32,activation = 'relu'))
+cnn_model.add(Dense(10,activation = 'sigmoid'))
+cnn_model.compile(loss ='sparse_categorical_crossentropy',optimizer = Adam(learning_rate=0.001),metrics= ['accuracy'])
+epochs = 200
+cnn_model.fit(X_train,y_train,batch_size =512,epochs = epochs,verbose = 1,validation_data = (X_validate,y_validate) )
+#run 
+evaluation = cnn_model.evaluate(X_test,y_test)
+print('Test Accuracy : {:.3f}'.format(evaluation[1]))
+#run
+predicted_classes = np.argmax(cnn_model.predict(X_test),axis=-1)
+#run
+predicted_classes
+#run
+L = 5
+W = 5
+fig,axes = plt.subplots(L,W,figsize = (12,12))
+axes = axes.ravel()
+for i in np.arange(0,L*W):
+    axes[i].imshow(X_test[i].reshape(28,28))
+    axes[i].set_title('Prediction Class:{1} \n true class: {1}'.format(predicted_classes[i],y_test[i]))
+    axes[i].axis('off')
+plt.subplots_adjust(wspace = 0.5)  
+#run
+classes = 10
+targets = ["Class {}".format(i) for i in range(classes)]
+print(classification_report(y_test, predicted_classes, target_names = targets))
+#run
+
+
+
+
+
+DL RNN  asgn 03
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import LSTM
+#change location as per req
+training_set=pd.read_csv('/content/drive/MyDrive/deep_learning_dataset/google_stock/google_train.csv')
+training_set
+#run 
+training_set.info()
+#run
+plt.figure(figsize=(5, 5))
+plt.subplots_adjust(top=1.25, bottom=1.2)
+training_set['Adj Close'].plot()
+plt.ylabel('Adj Close')
+plt.xlabel(None)
+plt.title(f"Closing Price of Google")
+plt.tight_layout()
+#run
+plt.figure(figsize=(15, 20))
+plt.subplots_adjust(top=1.25, bottom=1.2)
+training_set['Volume'].plot()
+plt.ylabel('Volume')
+plt.xlabel(None)
+plt.title(f"Sales Volume")
+#run
+training_set=training_set.iloc[:,1:2].values
+#run
+sc= MinMaxScaler()
+training_set=sc.fit_transform(training_set)
+X_train= training_set[0:1257]
+y_train= training_set[1:1258]
+X_train=np.reshape(X_train, (1257 , 1 , 1))
+#run
+regressor = Sequential()
+regressor.add(LSTM(units=4, activation= 'sigmoid', input_shape= (None,1)))
+regressor.add(Dense( units=1 ))
+regressor.compile(optimizer='adam', loss='mean_squared_error')
+regressor.fit(X_train, y_train, batch_size=32, epochs=200)
+#run
+test_set = pd.read_csv('/content/drive/MyDrive/deep_learning_dataset/google_stock/google_test.csv')
+real_stock_price = test_set.iloc[:,1:2].values
+inputs = real_stock_price
+inputs = sc.transform(inputs)
+inputs = np.reshape(inputs, (20 , 1, 1))
+predicted_stock_price = regressor.predict(inputs)
+predicted_stock_price = sc.inverse_transform(predicted_stock_price)
+#run 
+plt.plot( real_stock_price , color = 'red' , label = 'Real Google Stock Price')
+plt.plot( predicted_stock_price , color = 'blue' , label = 'Predicted Google Stock Price')
+plt.title('Google Stock Price Prediction')
+plt.xlabel( 'time' )
+plt.ylabel( 'Google Stock Price' )
+plt.legend()
+plt.show()
